@@ -43,7 +43,7 @@
   </main>
 
   <footer class="text-center py-6 text-sm text-gray-500">
-    © 2025 ShopHub. Shopping is Simple with us! 💙.
+    © 2025 ShopHub. Shopping is Simple with us! 💙
   </footer>
 
   <script>
@@ -85,45 +85,110 @@
     function sendMessage() {
       const input = document.getElementById("chat-input");
       const userText = input.value.trim();
-
       if (!userText) return;
 
-      // Add user message
       const userBubble = document.createElement("div");
       userBubble.className = "chat-bubble bg-blue-200 px-4 py-2 rounded-md w-max ml-auto";
       userBubble.innerText = userText;
       chat.appendChild(userBubble);
       input.value = "";
 
-      // Bot typing...
       setTimeout(() => {
         const botBubble = document.createElement("div");
         botBubble.className = "chat-bubble bg-gray-100 px-4 py-2 rounded-md w-max";
-
         const lower = userText.toLowerCase();
         let found = false;
 
-        // Order status
+        // Order
         if (lower.includes("where") && lower.includes("order")) {
-          botBubble.innerText = "Your order is being packed right now at our warehouse 🏭. Estimated delivery: 2 days 🚚";
+          found = true;
+          botBubble.innerText = "Your order is being packed right now 🏭. Estimated delivery: 2 days 🚚";
         }
+
+        // Offers
+        else if (lower.includes("offer") || lower.includes("discount")) {
+          found = true;
+          botBubble.innerHTML = `
+            🎉 <b>Today's Hot Offers</b>:<br>
+            🕒 10% off on all watches!<br>
+            🛏️ Buy 1 Bedcover, Get 1 Free!<br>
+            🎧 ₹100 off on Earbuds – Use code <code>LOVE100</code>
+          `;
+        }
+
+        // Categories
+        else if (lower.includes("show") && (lower.includes("products") || lower.includes("categories"))) {
+          found = true;
+          botBubble.innerHTML = `
+            💡 <b>Product Categories</b>:<br>
+            🔹 Watches<br>
+            🔹 Bedcovers<br>
+            🔹 Earbuds<br>
+            Try searching by category or price like 'bedcover under ₹500'
+          `;
+        }
+
+        // Top-rated
+        else if (lower.includes("top rated") || lower.includes("best products")) {
+          found = true;
+          const sorted = products.sort((a, b) => b.rating - a.rating);
+          botBubble.innerHTML = `<b>🔥 Top Rated Products:</b><br>` +
+            sorted.slice(0, 2).map(p => `
+              👉 <strong>${p.name}</strong><br>
+              ₹${p.price} – ${generateStars(p.rating)}<br>
+              <a href="${p.link}" class="text-blue-600 underline" target="_blank">View</a><br>
+              <img src="${p.img}" class="w-24 h-24 rounded my-2"/>
+            `).join("<hr>");
+        }
+
+        // Cart
+        else if (lower.includes("checkout") || lower.includes("cart")) {
+          found = true;
+          botBubble.innerHTML = `
+            🛒 <b>Your Cart Summary</b><br>
+            Items: 2 (Watch & Earbuds)<br>
+            Total: ₹1049<br>
+            <a href="https://shopify.com/fake-checkout" class="text-green-600 underline">Proceed to Fake Checkout</a>
+          `;
+        }
+
+        // Product match or price search
         else {
-          for (let p of products) {
-            if (lower.includes(p.category) || lower.includes(p.name.toLowerCase()) || lower.includes(p.price.toString())) {
+          const priceMatch = userText.match(/₹?(\d+)/);
+          if (priceMatch) {
+            const max = parseInt(priceMatch[1]);
+            const matching = products.filter(p => p.price <= max);
+            if (matching.length > 0) {
               found = true;
-              botBubble.innerHTML = `
-                Here's something you’ll love 😍:<br>
+              botBubble.innerHTML = `<b>Matching Products:</b><br>` + matching.map(p => `
                 <strong>${p.name}</strong><br>
                 Price: ₹${p.price}<br>
                 Rating: ${generateStars(p.rating)}<br>
-                <a class="text-blue-600 underline" href="${p.link}" target="_blank">View on Shopify</a><br>
-                <img src="${p.img}" alt="${p.name}" class="w-32 h-32 mt-2 rounded-md"/>
-              `;
-              break;
+                <a href="${p.link}" class="text-blue-600 underline">View</a><br>
+                <img src="${p.img}" class="w-28 h-28 mt-2 rounded"/>
+              `).join("<hr>");
             }
           }
+
           if (!found) {
-            botBubble.innerText = "Oops 😔 I couldn’t find that. Try something like 'bedcover', 'earbuds', or a budget 💰";
+            for (let p of products) {
+              if (lower.includes(p.category) || lower.includes(p.name.toLowerCase())) {
+                found = true;
+                botBubble.innerHTML = `
+                  Here's something you’ll love 😍:<br>
+                  <strong>${p.name}</strong><br>
+                  Price: ₹${p.price}<br>
+                  Rating: ${generateStars(p.rating)}<br>
+                  <a class="text-blue-600 underline" href="${p.link}" target="_blank">View on Shopify</a><br>
+                  <img src="${p.img}" alt="${p.name}" class="w-32 h-32 mt-2 rounded-md"/>
+                `;
+                break;
+              }
+            }
+          }
+
+          if (!found) {
+            botBubble.innerText = "Oops 😔 I couldn’t find that. Try 'bedcover', 'earbuds', or a price like ₹500 💰";
           }
         }
 
